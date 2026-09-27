@@ -3,660 +3,669 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хранители Дружбы — Kahoot Edition</title>
+    <title>Игра-презентация: Признаки делимости 5 класс</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Montserrat (Kahoot vibe) -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
-    <!-- Confetti JS -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Tone.js для звуковых эффектов -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/1.4.8/Tone.js"></script>
+
     <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: #250f47; /* Kahoot deep purple */
-            color: #ffffff;
-            min-height: 100vh;
-            overflow-x: hidden;
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Nunito', sans-serif; }
+        
+        h1, h2, h3, .title-font { font-family: 'Montserrat', sans-serif; }
+        
+        /* Контейнер 16:9 для идеального отображения на интерактивной доске */
+        #app-container {
+            position: relative;
+            width: 100vw;
+            height: 56.25vw; /* 16:9 aspect ratio */
+            max-height: 100vh;
+            max-width: 177.78vh; /* 16:9 aspect ratio */
+            background-color: #0f172a;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
-        .kahoot-card {
-            background: #ffffff;
-            color: #333333;
-            box-shadow: 0 12px 0 0 rgba(0, 0, 0, 0.2);
-            border-radius: 1.5rem;
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: scale(0.95);
         }
-        /* Kahoot 4 Answer Buttons */
-        .kahoot-btn-red { background: #e21b3c; color: white; box-shadow: 0 6px 0 0 #9c1228; }
-        .kahoot-btn-red:hover:not(:disabled) { background: #f21f42; }
-        .kahoot-btn-red:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 0 #9c1228; }
+        
+        .slide.active {
+            opacity: 1; pointer-events: auto;
+            transform: scale(1);
+        }
 
-        .kahoot-btn-blue { background: #1368ce; color: white; box-shadow: 0 6px 0 0 #0d468a; }
-        .kahoot-btn-blue:hover:not(:disabled) { background: #1875ea; }
-        .kahoot-btn-blue:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 0 #0d468a; }
+        .dark-slide { background-color: #0f172a; color: #f8fafc; justify-content: center; align-items: center; text-align: center; padding: 4vw; }
+        .light-slide { background-color: #f8fafc; color: #1e293b; padding: 3vw 5vw; }
+        
+        .accent-blue { color: #3b82f6; }
+        .accent-emerald { color: #10b981; }
+        .accent-amber { color: #f59e0b; }
+        
+        .bg-blue { background-color: #3b82f6; color: white; }
+        .bg-emerald { background-color: #10b981; color: white; }
+        .bg-amber { background-color: #f59e0b; color: white; }
 
-        .kahoot-btn-yellow { background: #d89e00; color: white; box-shadow: 0 6px 0 0 #946c00; }
-        .kahoot-btn-yellow:hover:not(:disabled) { background: #f1b002; }
-        .kahoot-btn-yellow:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 0 #946c00; }
+        /* Игровые элементы */
+        .number-bubble { 
+            display: flex; justify-content: center; align-items: center; 
+            background: white; border-radius: 50%; 
+            width: 8vw; height: 8vw; font-size: 3vw; font-weight: 800; font-family: 'Montserrat', sans-serif; color: #1e293b; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15); 
+            cursor: pointer; transition: all 0.2s;
+            border: 4px solid transparent;
+        }
+        .number-bubble:active { transform: scale(0.9); }
+        .number-bubble.small { width: 6vw; height: 6vw; font-size: 2.2vw; }
+        .number-bubble.selected { border-color: #3b82f6; transform: scale(1.1); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        .number-bubble.success { background-color: #10b981; color: white; border-color: #10b981; pointer-events: none;}
+        .number-bubble.disabled { opacity: 0.3; pointer-events: none; }
 
-        .kahoot-btn-green { background: #26890c; color: white; box-shadow: 0 6px 0 0 #185a07; }
-        .kahoot-btn-green:hover:not(:disabled) { background: #2ea20f; }
-        .kahoot-btn-green:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 0 #185a07; }
+        .target-box { 
+            border: 4px dashed #cbd5e1; border-radius: 1.5vw; padding: 1.5vw; flex: 1 1 0; 
+            min-height: 15vw; display: flex; flex-direction: column; align-items: center; gap: 1vw; 
+            background: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;
+        }
+        .target-box:hover, .target-box.highlight { background: rgba(219, 234, 254, 0.8); border-color: #3b82f6; }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0.9); opacity: 0; }
+        .card-row { display: flex; gap: 2vw; width: 100%; justify-content: center; align-items: center; flex-grow: 1; }
+        .card { background: white; border-radius: 1.5vw; padding: 2vw 1.5vw; flex: 1 1 0; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+
+        /* Навигация */
+        .nav-btn {
+            position: absolute; bottom: 2vw; width: 4vw; height: 4vw;
+            background: rgba(0,0,0,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 2vw; color: #1e293b; cursor: pointer; transition: all 0.2s; z-index: 100;
+            border: 2px solid transparent;
+        }
+        .dark-slide .nav-btn { background: rgba(255,255,255,0.1); color: white; }
+        .nav-btn:hover { background: #3b82f6; color: white; border-color: white; }
+        .nav-btn-prev { left: 2vw; }
+        .nav-btn-next { right: 2vw; }
+
+        /* Анимации */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px) rotate(-5deg); }
+            75% { transform: translateX(10px) rotate(5deg); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; background-color: #ef4444 !important; color: white !important; }
+        
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .animate-bounce-in {
-            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+        .pop-in { animation: popIn 0.5s ease-out forwards; }
+
+        .hidden-element { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+        .visible-element { opacity: 1; pointer-events: auto; }
+        
+        .math-expr { font-size: 4vw; font-weight: 700; letter-spacing: 0.1vw; }
+        .highlight-digit { color: #ef4444; background: #fee2e2; padding: 0 0.5vw; border-radius: 0.5vw; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4 min-h-screen">
+<body>
 
-    <div id="app" class="w-full max-w-4xl bg-[#1a0933] rounded-3xl border-4 border-[#3a1866] shadow-2xl overflow-hidden flex flex-col min-h-[640px] transition-all duration-300 relative">
+    <div id="app-container">
         
-        <!-- HEADER / LOBBY BAR -->
-        <header id="game-header" class="bg-[#120524] px-6 py-4 flex justify-between items-center border-b border-[#3a1866] hidden">
-            <div class="flex items-center space-x-3">
-                <span id="player-avatar-display" class="text-3xl bg-[#2a114d] p-2 rounded-2xl border-2 border-[#57229e]">😎</span>
-                <div>
-                    <h2 id="player-name-display" class="font-black text-sm md:text-base text-white tracking-wide">Имя</h2>
-                    <span id="player-grade-display" class="text-xs text-purple-300 font-semibold">7 класс</span>
+        <!-- Слайд 1: Титульный (Темный) -->
+        <div class="slide dark-slide active" id="slide-0">
+            <p style="font-size: 1.5vw; color: #3b82f6; margin-bottom: 1vw; text-transform: uppercase; letter-spacing: 0.3vw; font-weight: 700;">Математика • 5 Класс</p>
+            <h1 style="font-size: 6vw; font-weight: 800; margin-bottom: 2vw; line-height: 1.1;">Признаки делимости</h1>
+            <div style="display: flex; gap: 2vw; margin-top: 2vw; margin-bottom: 4vw;">
+                <div class="number-bubble bg-blue pop-in" style="animation-delay: 0.1s;">2</div>
+                <div class="number-bubble bg-emerald pop-in" style="animation-delay: 0.3s;">5</div>
+                <div class="number-bubble bg-amber pop-in" style="animation-delay: 0.5s;">10</div>
+            </div>
+            <button onclick="startGame()" style="padding: 1vw 3vw; font-size: 2vw; font-weight: 700; background: #3b82f6; color: white; border-radius: 3vw; border: none; cursor: pointer; box-shadow: 0 10px 20px rgba(59,130,246,0.3); transition: transform 0.2s;">
+                Начать урок <i class="fa-solid fa-play ml-2"></i>
+            </button>
+        </div>
+
+        <!-- Слайд 2: SEL Настрой -->
+        <div class="slide light-slide" id="slide-1">
+            <h2 style="font-size: 3vw; margin-bottom: 3vw; text-align: center;">Операция «Напарник»</h2>
+            <div style="display: flex; flex-grow: 1; align-items: center; gap: 4vw;">
+                <div style="flex: 1; display: flex; justify-content: center;">
+                    <i class="fa-solid fa-people-arrows" style="font-size: 15vw; color: #3b82f6;"></i>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 2vw;">
+                    <div style="display: flex; gap: 1.5vw; align-items: center;">
+                        <div style="width: 4vw; height: 4vw; border-radius: 50%; background: #dbeafe; color: #3b82f6; display: flex; justify-content: center; align-items: center; font-size: 2vw; font-weight: 700;">1</div>
+                        <p style="font-size: 2vw; font-weight: 600; margin: 0;">Повернись к соседу.</p>
+                    </div>
+                    <div style="display: flex; gap: 1.5vw; align-items: center;">
+                        <div style="width: 4vw; height: 4vw; border-radius: 50%; background: #dbeafe; color: #3b82f6; display: flex; justify-content: center; align-items: center; font-size: 2vw; font-weight: 700;">2</div>
+                        <p style="font-size: 2vw; font-weight: 600; margin: 0;">Назови свою эмоцию.</p>
+                    </div>
+                    <div style="display: flex; gap: 1.5vw; align-items: center;">
+                        <div style="width: 4vw; height: 4vw; border-radius: 50%; background: #dbeafe; color: #3b82f6; display: flex; justify-content: center; align-items: center; font-size: 2vw; font-weight: 700;">3</div>
+                        <p style="font-size: 2vw; font-weight: 600; margin: 0;">Пожелай отличной работы!</p>
+                    </div>
                 </div>
             </div>
-            <!-- Score & Streak -->
-            <div class="flex items-center space-x-4">
-                <div class="bg-[#2a114d] border-2 border-[#57229e] px-4 py-2 rounded-2xl flex items-center space-x-2">
-                    <i class="fa-solid fa-fire text-amber-400"></i>
-                    <span id="streak-counter" class="font-extrabold text-sm text-amber-300">0 стрик</span>
+        </div>
+
+        <!-- Слайд 3: Актуализация (Игра) -->
+        <div class="slide light-slide" id="slide-2">
+            <h2 style="font-size: 3vw; margin-bottom: 1vw; text-align: center;">Разминка: Чётное или Нечётное?</h2>
+            <p style="font-size: 1.8vw; color: #64748b; text-align: center; margin-bottom: 2vw;">Нажми на число, а затем на правильную корзину.</p>
+            
+            <div id="warmup-numbers" style="display: flex; gap: 2vw; justify-content: center; margin-bottom: 3vw; min-height: 8vw;">
+                <div class="number-bubble" onclick="selectBubble(this, 'warmup')">14</div>
+                <div class="number-bubble" onclick="selectBubble(this, 'warmup')">25</div>
+                <div class="number-bubble" onclick="selectBubble(this, 'warmup')">30</div>
+                <div class="number-bubble" onclick="selectBubble(this, 'warmup')">7</div>
+            </div>
+            
+            <div style="display: flex; gap: 4vw; justify-content: center; flex-grow: 1;">
+                <div class="target-box" onclick="placeBubble('even', this)" data-type="even">
+                    <h3 style="font-size: 2.5vw; color: #3b82f6; margin: 0;">Чётные</h3>
+                    <div class="bucket-content" style="display: flex; flex-wrap: wrap; gap: 1vw; justify-content: center; margin-top: 1vw;"></div>
                 </div>
-                <div class="bg-[#2a114d] border-2 border-[#57229e] px-4 py-2 rounded-2xl flex items-center space-x-2">
-                    <i class="fa-solid fa-star text-yellow-400"></i>
-                    <span id="score-counter" class="font-black text-base text-yellow-300">0</span>
+                <div class="target-box" onclick="placeBubble('odd', this)" data-type="odd">
+                    <h3 style="font-size: 2.5vw; color: #ef4444; margin: 0;">Нечётные</h3>
+                    <div class="bucket-content" style="display: flex; flex-wrap: wrap; gap: 1vw; justify-content: center; margin-top: 1vw;"></div>
                 </div>
             </div>
-        </header>
+        </div>
 
-        <!-- SCREEN CONTAINER -->
-        <main class="flex-1 flex flex-col justify-center p-6 md:p-10 relative">
-
-            <!-- SCREEN 1: WELCOME & LOBBY SETUP -->
-            <div id="screen-welcome" class="space-y-6 text-center max-w-lg mx-auto w-full animate-bounce-in">
-                <div class="inline-block bg-[#3a1866] text-amber-300 px-6 py-2 rounded-full font-black text-xs md:text-sm uppercase tracking-widest border-2 border-[#57229e]">
-                    🎮 Kahoot-викторина • Профилактика буллинга
-                </div>
-                <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">
-                    Хранители Дружбы
-                </h1>
-                <p class="text-purple-200 text-sm md:text-base">
-                    Пройди 10 захватывающих жизненных ситуаций, прокачай эмпатию и узнай, как противостоять травле в школе и сети!
+        <!-- Слайд 4: Открытие знания -->
+        <div class="slide light-slide" id="slide-3">
+            <h2 style="font-size: 3vw; margin-bottom: 3vw; text-align: center;">Секрет делимости</h2>
+            <div style="display: flex; flex-direction: column; gap: 3vw; align-items: center; flex-grow: 1;">
+                
+                <p class="math-expr">
+                    7 · 100 + 8 · 10 + <span class="highlight-digit">9</span> = 78<span class="highlight-digit">9</span>
+                </p>
+                
+                <p class="math-expr">
+                    7 · 100 + 8 · 10 + <span class="highlight-digit" style="color: #3b82f6; background: #dbeafe;">4</span> = 78<span class="highlight-digit" style="color: #3b82f6; background: #dbeafe;">4</span>
                 </p>
 
-                <!-- Lobby Inputs Card -->
-                <div class="kahoot-card p-6 space-y-4 text-left">
-                    <div>
-                        <label class="block text-xs font-black uppercase text-slate-500 mb-1">Пин-код викторины</label>
-                        <div class="flex items-center bg-slate-100 rounded-xl px-4 py-3 border-2 border-slate-200">
-                            <i class="fa-solid fa-key text-purple-600 mr-3"></i>
-                            <input type="text" value="777-505-KZ" disabled class="bg-transparent font-black text-slate-700 w-full tracking-wider focus:outline-none select-none">
-                            <span class="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-lg">Лобби открыто</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black uppercase text-slate-500 mb-1">Твое имя / никнейм</label>
-                        <input type="text" id="input-name" placeholder="Например: Амир" class="w-full px-4 py-3 bg-slate-100 border-2 border-slate-200 rounded-xl font-bold text-slate-800 focus:border-purple-600 focus:outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black uppercase text-slate-500 mb-1">Твой класс</label>
-                        <select id="select-grade" class="w-full px-4 py-3 bg-slate-100 border-2 border-slate-200 rounded-xl font-bold text-slate-800 focus:border-purple-600 focus:outline-none transition">
-                            <option value="5 класс">5 класс</option>
-                            <option value="6 класс">6 класс</option>
-                            <option value="7 класс" selected>7 класс</option>
-                            <option value="8 класс">8 класс</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black uppercase text-slate-500 mb-1">Выбери аватар</label>
-                        <div class="grid grid-cols-5 gap-2" id="avatar-selector">
-                            <button type="button" onclick="selectAvatar('😎')" class="avatar-btn p-2 text-2xl bg-purple-100 border-3 border-purple-600 rounded-xl hover:scale-110 transition">😎</button>
-                            <button type="button" onclick="selectAvatar('🦊')" class="avatar-btn p-2 text-2xl bg-slate-100 border-3 border-transparent rounded-xl hover:scale-110 transition">🦊</button>
-                            <button type="button" onclick="selectAvatar('🚀')" class="avatar-btn p-2 text-2xl bg-slate-100 border-3 border-transparent rounded-xl hover:scale-110 transition">🚀</button>
-                            <button type="button" onclick="selectAvatar('⭐')" class="avatar-btn p-2 text-2xl bg-slate-100 border-3 border-transparent rounded-xl hover:scale-110 transition">⭐</button>
-                            <button type="button" onclick="selectAvatar('🎨')" class="avatar-btn p-2 text-2xl bg-slate-100 border-3 border-transparent rounded-xl hover:scale-110 transition">🎨</button>
-                        </div>
-                    </div>
+                <div class="hidden-element" id="secret-rule-box" style="background: #eff6ff; padding: 2vw 3vw; border-radius: 1.5vw; margin-top: 2vw; border: 3px solid #3b82f6; cursor: pointer;" onclick="document.getElementById('secret-rule-text').classList.remove('hidden-element')">
+                    <h3 style="font-size: 2.5vw; color: #1e293b; margin-bottom: 1vw; text-align: center;">На какую цифру нужно смотреть? (Нажми)</h3>
+                    <p id="secret-rule-text" class="hidden-element" style="font-size: 1.8vw; color: #3b82f6; text-align: center; font-weight: 700; margin: 0;">Сотни и десятки всегда делятся на 2, 5 и 10. Делимость зависит только от <span style="text-decoration: underline;">разряда единиц</span> (последней цифры)!</p>
                 </div>
-
-                <div>
-                    <button onclick="startGame()" class="w-full bg-[#26890c] hover:bg-[#2ea20f] text-white font-black text-lg py-4 px-6 rounded-2xl shadow-[0_6px_0_0_#185a07] active:translate-y-1 active:shadow-none transition">
-                        <span>ПОГНАЛИ! 🚀</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- SCREEN 2: QUESTION SCREEN -->
-            <div id="screen-question" class="space-y-6 hidden animate-bounce-in">
-                <!-- Question Top Bar: Counter & Timer -->
-                <div class="flex flex-wrap justify-between items-center bg-[#120524]/60 p-4 rounded-2xl border border-[#3a1866] gap-2">
-                    <div class="flex items-center space-x-3">
-                        <span id="question-counter" class="font-black text-xs md:text-sm uppercase tracking-widest text-purple-300">Вопрос 1 из 10</span>
-                        <span id="difficulty-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Легкий</span>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <div class="w-32 md:w-48 bg-[#2a114d] h-4 rounded-full overflow-hidden border border-[#57229e]">
-                            <div id="timer-bar" class="bg-amber-400 h-full w-full transition-all duration-1000 linear"></div>
-                        </div>
-                        <span id="timer-text" class="font-black text-amber-300 w-6 text-center text-sm">30</span>
-                    </div>
-                </div>
-
-                <!-- Scenario Question Card -->
-                <div class="kahoot-card p-6 md:p-8 text-center space-y-3">
-                    <span id="question-category" class="inline-block bg-purple-100 text-purple-700 font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">Школа</span>
-                    <h2 id="question-title" class="text-xl md:text-2xl font-black text-slate-900 leading-snug">Заголовок ситуации...</h2>
-                </div>
-
-                <!-- 4 Kahoot Options Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Red (Triangle) -->
-                    <button onclick="handleAnswer(0)" id="btn-opt-0" class="kahoot-btn-red p-5 rounded-2xl font-bold text-left flex items-center space-x-4 transition transform active:scale-95 group">
-                        <span class="bg-black/20 p-3 rounded-xl text-xl flex-shrink-0"><i class="fa-solid fa-triangle text-white"></i></span>
-                        <span id="opt-0" class="text-sm md:text-base leading-tight font-extrabold">Вариант 1</span>
-                    </button>
-                    <!-- Blue (Diamond) -->
-                    <button onclick="handleAnswer(1)" id="btn-opt-1" class="kahoot-btn-blue p-5 rounded-2xl font-bold text-left flex items-center space-x-4 transition transform active:scale-95 group">
-                        <span class="bg-black/20 p-3 rounded-xl text-xl flex-shrink-0"><i class="fa-solid fa-gem text-white"></i></span>
-                        <span id="opt-1" class="text-sm md:text-base leading-tight font-extrabold">Вариант 2</span>
-                    </button>
-                    <!-- Yellow (Circle) -->
-                    <button onclick="handleAnswer(2)" id="btn-opt-2" class="kahoot-btn-yellow p-5 rounded-2xl font-bold text-left flex items-center space-x-4 transition transform active:scale-95 group">
-                        <span class="bg-black/20 p-3 rounded-xl text-xl flex-shrink-0"><i class="fa-solid fa-circle text-white"></i></span>
-                        <span id="opt-2" class="text-sm md:text-base leading-tight font-extrabold">Вариант 3</span>
-                    </button>
-                    <!-- Green (Square) -->
-                    <button onclick="handleAnswer(3)" id="btn-opt-3" class="kahoot-btn-green p-5 rounded-2xl font-bold text-left flex items-center space-x-4 transition transform active:scale-95 group">
-                        <span class="bg-black/20 p-3 rounded-xl text-xl flex-shrink-0"><i class="fa-solid fa-square text-white"></i></span>
-                        <span id="opt-3" class="text-sm md:text-base leading-tight font-extrabold">Вариант 4</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- SCREEN 3: FEEDBACK / RESULTS PER QUESTION -->
-            <div id="screen-feedback" class="space-y-6 hidden animate-bounce-in max-w-2xl mx-auto w-full text-center">
-                <div id="feedback-badge" class="inline-block p-4 rounded-3xl text-4xl mb-1 bg-emerald-500 text-white shadow-lg">
-                    🎉
-                </div>
-                <h2 id="feedback-header" class="text-2xl md:text-3xl font-black text-white">Правильно!</h2>
                 
-                <div class="kahoot-card p-6 text-left space-y-4">
-                    <div>
-                        <h4 class="text-xs font-black uppercase text-purple-700 tracking-wider mb-1">Психолого-педагогический разбор</h4>
-                        <p id="feedback-explanation" class="text-sm md:text-base text-slate-700 font-semibold leading-relaxed">
-                            Пояснение...
-                        </p>
-                    </div>
-                    <div class="bg-purple-50 border border-purple-200 p-3.5 rounded-2xl flex items-start space-x-3">
-                        <i class="fa-solid fa-shield-halved text-purple-600 mt-1 text-lg"></i>
-                        <div>
-                            <span class="text-xs font-black uppercase text-purple-900 block">Совет Хранителя</span>
-                            <p id="feedback-tip" class="text-xs md:text-sm text-purple-800 font-bold mt-0.5">Совет по безопасности или эмпатии.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <button onclick="nextStep()" class="w-full bg-[#1368ce] hover:bg-[#1875ea] text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#0d468a] active:translate-y-1 active:shadow-none transition">
-                    <span>Далее ➡️</span>
-                </button>
+                <button onclick="document.getElementById('secret-rule-box').classList.remove('hidden-element'); this.style.display='none';" style="padding: 1vw 2vw; font-size: 1.5vw; background: #1e293b; color: white; border-radius: 1vw;">Исследовать</button>
             </div>
+        </div>
 
-            <!-- SCREEN 4: PODIUM / FINAL SCREEN -->
-            <div id="screen-final" class="space-y-6 hidden animate-bounce-in max-w-lg mx-auto w-full text-center">
-                <div class="inline-block bg-amber-400 text-slate-900 px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest shadow-lg">
-                    🏆 Викторина завершена!
+        <!-- Слайд 5: Правила -->
+        <div class="slide light-slide" id="slide-4">
+            <h2 style="font-size: 3vw; margin-bottom: 2vw; text-align: center;">Запоминаем правила</h2>
+            <p style="font-size: 1.5vw; color: #64748b; text-align: center; margin-bottom: 3vw;">Смотрим на последнюю цифру!</p>
+            
+            <div class="card-row">
+                <div class="card" style="border-top: 1vw solid #3b82f6;">
+                    <h3 class="title-font" style="font-size: 4vw; margin-bottom: 1vw; color: #3b82f6;">На 2</h3>
+                    <p class="title-font" style="font-size: 3vw; color: #1e293b;">0, 2, 4, 6, 8</p>
+                    <p style="font-size: 1.5vw; color: #64748b; margin-top: 1vw;">Чётные числа</p>
                 </div>
-                <h2 class="text-3xl md:text-4xl font-black text-white">Великолепная игра!</h2>
                 
-                <div class="kahoot-card p-6 space-y-4 text-center">
-                    <span id="final-badge-icon" class="text-5xl inline-block bg-purple-100 p-4 rounded-3xl">🌟</span>
-                    <h3 id="final-badge-title" class="text-xl font-black text-purple-900">Амбассадор Добра</h3>
-                    <p id="final-score-text" class="text-slate-600 font-bold text-sm">Ты набрал 0 очков!</p>
-                    
-                    <div class="bg-slate-100 p-4 rounded-2xl grid grid-cols-2 gap-4 text-left">
-                        <div>
-                            <span class="text-xs font-bold text-slate-400 uppercase">Макс. стрик</span>
-                            <p id="final-streak" class="text-xl font-black text-amber-500">0 🔥</p>
-                        </div>
-                        <div>
-                            <span class="text-xs font-bold text-slate-400 uppercase">Правильных ответов</span>
-                            <p id="final-correct-count" class="text-xl font-black text-indigo-600">0 / 10</p>
-                        </div>
-                    </div>
+                <div class="card" style="border-top: 1vw solid #10b981;">
+                    <h3 class="title-font" style="font-size: 4vw; margin-bottom: 1vw; color: #10b981;">На 5</h3>
+                    <p class="title-font" style="font-size: 3vw; color: #1e293b;">0 или 5</p>
                 </div>
-
-                <!-- Helpline -->
-                <div class="bg-rose-950/80 border-2 border-rose-800 p-4 rounded-2xl text-left space-y-1.5">
-                    <div class="flex items-center space-x-2 text-rose-300 font-black text-xs md:text-sm">
-                        <i class="fa-solid fa-phone-volume"></i>
-                        <span>Телефон доверия для школьников (Казахстан):</span>
-                    </div>
-                    <p class="text-xs text-rose-200 leading-relaxed font-semibold">
-                        Если ты или твои друзья столкнулись с буллингом, не оставайтесь один на один. Звоните бесплатно и анонимно: <strong class="text-white underline text-sm">111</strong> или <strong class="text-white underline">8-800-2000-122</strong>.
-                    </p>
+                
+                <div class="card" style="border-top: 1vw solid #f59e0b;">
+                    <h3 class="title-font" style="font-size: 4vw; margin-bottom: 1vw; color: #f59e0b;">На 10</h3>
+                    <p class="title-font" style="font-size: 3vw; color: #1e293b;">Только 0</p>
                 </div>
-
-                <button onclick="restartGame()" class="w-full bg-[#26890c] hover:bg-[#2e20f] text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#185a07] active:translate-y-1 active:shadow-none transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-rotate-right"></i>
-                    <span>Играть снова</span>
-                </button>
             </div>
+        </div>
 
-        </main>
+        <!-- Слайд 6: Игра Задание 1 -->
+        <div class="slide light-slide" id="slide-5">
+            <p style="font-size: 1.2vw; color: #64748b; margin-bottom: 0.5vw; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1vw;">Уровень 1 • Классификация</p>
+            <h2 style="font-size: 2.5vw; margin-bottom: 1.5vw;">В какие корзины попадут числа?</h2>
+            
+            <div id="main-sort-numbers" style="display: flex; gap: 1vw; justify-content: center; flex-wrap: wrap; margin-bottom: 2vw; min-height: 6vw;">
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">31</div>
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">42</div>
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">63</div>
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">415</div>
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">702</div>
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">1005</div>
+                <div class="number-bubble small" onclick="selectBubble(this, 'mainSort')">1110</div>
+            </div>
+            
+            <div style="display: flex; gap: 2vw; flex-grow: 1;">
+                <div class="target-box" onclick="placeMainBubble('div2', this)" style="border-color: #3b82f6;">
+                    <h3 style="font-size: 2vw; color: #3b82f6; margin: 0;">На 2</h3>
+                    <div class="bucket-content" style="display: flex; flex-wrap: wrap; gap: 0.5vw; justify-content: center; margin-top: 1vw;"></div>
+                </div>
+                <div class="target-box" onclick="placeMainBubble('div5', this)" style="border-color: #10b981;">
+                    <h3 style="font-size: 2vw; color: #10b981; margin: 0;">На 5</h3>
+                    <div class="bucket-content" style="display: flex; flex-wrap: wrap; gap: 0.5vw; justify-content: center; margin-top: 1vw;"></div>
+                </div>
+                <div class="target-box" onclick="placeMainBubble('div10', this)" style="border-color: #f59e0b;">
+                    <h3 style="font-size: 2vw; color: #f59e0b; margin: 0;">На 10</h3>
+                    <div class="bucket-content" style="display: flex; flex-wrap: wrap; gap: 0.5vw; justify-content: center; margin-top: 1vw;"></div>
+                </div>
+                <div class="target-box" onclick="placeMainBubble('none', this)" style="border-color: #ef4444;">
+                    <h3 style="font-size: 2vw; color: #ef4444; margin: 0;">Никуда</h3>
+                    <div class="bucket-content" style="display: flex; flex-wrap: wrap; gap: 0.5vw; justify-content: center; margin-top: 1vw;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7: Игра Уровень А -->
+        <div class="slide light-slide" id="slide-6" style="background: #f0fdf4;">
+            <p style="font-size: 1.2vw; color: #16a34a; margin-bottom: 0.5vw; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1vw;">Уровень А • Базовый</p>
+            <h2 style="font-size: 3vw; margin-bottom: 2vw; color: #1e293b;">Секретный код</h2>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; gap: 3vw;">
+                <div style="background: white; padding: 2vw 4vw; border-radius: 2vw; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;">
+                    <p style="font-size: 1.8vw; color: #64748b; margin-bottom: 1vw;">Найди ВСЕ цифры, чтобы число делилось на <b style="color: #3b82f6">2</b>:</p>
+                    <p class="title-font" style="font-size: 8vw; color: #1e293b; margin: 0; line-height: 1;">34<span id="level-a-blank" style="color: #3b82f6; display: inline-block; width: 6vw; border-bottom: 0.5vw solid #cbd5e1; text-align: center;">_</span></p>
+                </div>
+
+                <div style="display: flex; gap: 1vw; justify-content: center; flex-wrap: wrap; width: 80%;">
+                    <div class="number-bubble small" onclick="checkLevelA(this, 0)">0</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 1)">1</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 2)">2</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 3)">3</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 4)">4</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 5)">5</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 6)">6</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 7)">7</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 8)">8</div>
+                    <div class="number-bubble small" onclick="checkLevelA(this, 9)">9</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8: Игра Уровень В -->
+        <div class="slide light-slide" id="slide-7" style="background: #fef3c7;">
+            <p style="font-size: 1.2vw; color: #d97706; margin-bottom: 0.5vw; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1vw;">Уровень В • Основной</p>
+            <h2 style="font-size: 3vw; margin-bottom: 2vw; color: #1e293b;">Ловушка!</h2>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; gap: 3vw;">
+                <div style="background: white; padding: 2vw 4vw; border-radius: 2vw; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;">
+                    <p style="font-size: 1.8vw; color: #64748b; margin-bottom: 1vw;">Делится на <b style="color: #10b981">5</b>. <span style="color: #ef4444; font-weight: 700;">НЕ делится на 10.</span></p>
+                    <p class="title-font" style="font-size: 8vw; color: #1e293b; margin: 0; line-height: 1;">71<span id="level-b-blank" style="color: #10b981; display: inline-block; width: 6vw; border-bottom: 0.5vw solid #cbd5e1; text-align: center;">_</span></p>
+                </div>
+
+                <div style="display: flex; gap: 4vw; justify-content: center;">
+                    <div class="number-bubble" onclick="checkLevelB(this, 0)">0</div>
+                    <div class="number-bubble" onclick="checkLevelB(this, 5)">5</div>
+                </div>
+                
+                <p id="level-b-msg" class="hidden-element" style="font-size: 2vw; color: #ef4444; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <!-- Слайд 9: Игра Уровень С -->
+        <div class="slide light-slide" id="slide-8" style="background: #e0e7ff;">
+            <p style="font-size: 1.2vw; color: #4f46e5; margin-bottom: 0.5vw; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1vw;">Уровень С • Продвинутый</p>
+            <h2 style="font-size: 3vw; margin-bottom: 1.5vw; color: #1e293b;">Сборка числа</h2>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; gap: 2vw;">
+                <p style="font-size: 1.8vw; color: #4f46e5; text-align: center; font-weight: 700; margin: 0; max-width: 80%;">
+                    Собери из цифр <b style="font-size: 2.5vw;">0, 2, 5</b> трёхзначное число, которое делится одновременно на 2, 5 и 10.
+                </p>
+
+                <div style="display: flex; gap: 2vw; margin-top: 1vw;">
+                    <div class="number-bubble" id="c-dig-0" onclick="selectLevelCBubble(this)">0</div>
+                    <div class="number-bubble" id="c-dig-2" onclick="selectLevelCBubble(this)">2</div>
+                    <div class="number-bubble" id="c-dig-5" onclick="selectLevelCBubble(this)">5</div>
+                </div>
+
+                <div style="display: flex; gap: 1vw; margin-top: 2vw; background: white; padding: 2vw 4vw; border-radius: 2vw; border: 4px solid #4f46e5;">
+                    <div class="target-box" style="width: 8vw; min-height: 8vw; padding: 0; justify-content: center;" onclick="placeLevelCBubble(this, 0)" id="c-slot-0"></div>
+                    <div class="target-box" style="width: 8vw; min-height: 8vw; padding: 0; justify-content: center;" onclick="placeLevelCBubble(this, 1)" id="c-slot-1"></div>
+                    <div class="target-box" style="width: 8vw; min-height: 8vw; padding: 0; justify-content: center; border-color: #f59e0b;" onclick="placeLevelCBubble(this, 2)" id="c-slot-2"></div>
+                </div>
+                <button onclick="checkLevelC()" style="margin-top: 1vw; padding: 1vw 3vw; font-size: 1.5vw; font-weight: bold; background: #4f46e5; color: white; border-radius: 1vw; border: none; cursor:pointer;">Проверить</button>
+                <button onclick="resetLevelC()" style="margin-top: 0.5vw; padding: 0.5vw 2vw; font-size: 1vw; font-weight: bold; background: transparent; color: #4f46e5; text-decoration: underline; border: none; cursor:pointer;">Сброс</button>
+            </div>
+        </div>
+
+        <!-- Слайд 10: Рефлексия -->
+        <div class="slide dark-slide" id="slide-9">
+            <h2 style="font-size: 4vw; font-weight: 800; margin-bottom: 4vw; color: #3b82f6;">Подводим итоги</h2>
+            
+            <div style="display: flex; gap: 3vw; width: 100%; max-width: 80%;">
+                <div style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 1.5vw; padding: 3vw 2vw; display: flex; flex-direction: column; gap: 1.5vw; align-items: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-lightbulb" style="font-size: 5vw; color: #f59e0b;"></i>
+                    <p style="font-size: 1.8vw; margin: 0; text-align: center; line-height: 1.4;">Какой из трёх признаков показался самым лёгким для запоминания?</p>
+                </div>
+
+                <div style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 1.5vw; padding: 3vw 2vw; display: flex; flex-direction: column; gap: 1.5vw; align-items: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-handshake" style="font-size: 5vw; color: #10b981;"></i>
+                    <p style="font-size: 1.8vw; margin: 0; text-align: center; line-height: 1.4;">Насколько понятно напарник объяснял свои решения?</p>
+                </div>
+            </div>
+            
+            <button onclick="goToSlide(0)" style="margin-top: 4vw; padding: 1vw 2vw; font-size: 1.2vw; background: transparent; color: white; border: 1px solid white; border-radius: 1vw; cursor: pointer;">В начало урока</button>
+        </div>
+
+        <!-- Кнопки навигации -->
+        <div class="nav-btn nav-btn-prev" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></div>
+        <div class="nav-btn nav-btn-next" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></div>
     </div>
 
     <script>
-        // Web Audio API Sound Effects Synthesizer
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(freq, type, duration) {
-            try {
-                if(audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch(e) {}
+        // Глобальные переменные и Audio Context
+        let currentSlide = 0;
+        const totalSlides = 10;
+        let synth;
+        let audioInitialized = false;
+
+        // Инициализация звука
+        function initAudio() {
+            if (!audioInitialized) {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                audioInitialized = true;
+            }
         }
 
-        const soundClick = () => playTone(600, 'sine', 0.08);
-        const soundCorrect = () => { playTone(523.25, 'triangle', 0.12); setTimeout(() => playTone(659.25, 'triangle', 0.18), 120); };
-        const soundWrong = () => { playTone(180, 'sawtooth', 0.22); };
-
-        // Game State
-        let gameState = {
-            name: 'Игрок',
-            grade: '7 класс',
-            avatar: '😎',
-            score: 0,
-            streak: 0,
-            maxStreak: 0,
-            correctCount: 0,
-            currentIndex: 0,
-            timer: 30,
-            timerInterval: null
-        };
-
-        // Full 10 Questions Database (4 Options each with 1 correct, difficulty ratings, and deep pedagogy)
-        const questions = [
-            {
-                category: "Чат класса (Кибербуллинг)",
-                difficulty: "easy",
-                title: "В общем чате класса одноклассники начали массово высмеивать и дразнить новенького ученика за неудачное фото. Твои действия?",
-                options: [
-                    "Поставлю смеющийся стикер, ведь это просто шутка.",
-                    "Проигнорирую и удалюсь из чата на весь вечер.",
-                    "Напишу в чат: «Ребята, давайте прекратим, это обидно», и поддержу одноклассника.",
-                    "Сделаю скриншот и отправлю старшеклассникам."
-                ],
-                correctIndex: 2,
-                explanation: "Открытая защита и остановка травли в зародыше — поступок сильного человека. Толпа часто прекращает буллинг, когда кто-то авторитетно говорит «Стоп».",
-                tip: "Кибербуллинг оставляет цифровой след. Никогда не пересылай оскорбительный контент."
-            },
-            {
-                category: "Школьная столовая",
-                difficulty: "easy",
-                title: "Новенький ученик растерянно ищет место с подносом. За вашим столом есть свободные места, но соседи шепчут: «Не садись сюда». Как поступить?",
-                options: [
-                    "Громко сказать: «Привет! Садись к нам, у нас как раз свободно!»",
-                    "Сделать вид, что занят телефоном, и промолчать.",
-                    "Поддержать соседей и отвернуться.",
-                    "Посмеяться вместе со всеми."
-                ],
-                correctIndex: 0,
-                explanation: "Проявление гостеприимства и включение новенького в компанию разрушает барьеры изоляции и делает коллектив дружнее.",
-                tip: "Доброта не требует усилий, но способна полностью изменить день человека."
-            },
-            {
-                category: "Социальные сети",
-                difficulty: "medium",
-                title: "В школьном паблике появился анонимный пост с неприятными слухами про твою одноклассницу. В комментариях разгорается токсичный спор.",
-                options: [
-                    "Переслать пост друзьям в личку, чтобы обсудить.",
-                    "Пожаловаться на пост за кибербуллинг и ложную информацию.",
-                    "Написать грубый комментарий в защиту, оскорбляя авторов в ответ.",
-                    "Пролистать ленту и забыть."
-                ],
-                correctIndex: 1,
-                explanation: "Жалоба на вредоносный контент в соцсетях помогает быстро заблокировать публикацию. Отвечать агрессией на агрессию — неэффективный путь.",
-                tip: "У каждой платформы есть правила против травли. Используй кнопку «Пожаловаться»."
-            },
-            {
-                category: "Спортивный зал",
-                difficulty: "medium",
-                title: "На уроке физкультуры при выборе команд слабого игрока берут последним, и кто-то вздыхает: «Опять он нам достанется...». Твой ход?",
-                options: [
-                    "Согласиться и сказать, что с ним трудно выиграть.",
-                    "Подбодрить одноклассника: «Ничего, ты отлично пасуешь, сыграемся!»",
-                    "Ничего не говорить и смотреть в пол.",
-                    "Предложить выгнать его из команды."
-                ],
-                correctIndex: 1,
-                explanation: "Поддержка сильных и слабых сторон каждого участника укрепляет командный дух и уверенность человека в себе.",
-                tip: "Команда сильна тогда, когда в неё верят все участники без исключения."
-            },
-            {
-                category: "Коридор школы",
-                difficulty: "hard",
-                title: "Одноклассник требует отдать ему твой рюкзак «поносить до конца перемены», угрожая испортить твои тетради. Что делать?",
-                options: [
-                    "Отдам сразу, не хочу связываться и портить отношения.",
-                    "Громко скажу «Нет! Верни немедленно» и обращусь к дежурному учителю.",
-                    "Ударю его в ответ в коридоре.",
-                    "Расскажу классной руководительнице и родителям после уроков."
-                ],
-                correctIndex: 1,
-                explanation: "Уверенный отказ и немедленное привлечение внимания взрослых (дежурных учителей) пресекают вымогательство и физическое давление.",
-                tip: "Обращение за помощью — это признак силы и защиты своих прав, а не слабости."
-            },
-            {
-                category: "Школьный двор",
-                difficulty: "medium",
-                title: "В школьном дворе двое ребят намеренно подставили подножку младшекласснику. Вокруг все смеются. Как поступить?",
-                options: [
-                    "Помогу малышу встать, отряхнуться и спрошу, всё ли в порядке.",
-                    "Скажу задирам: «Вы совсем совесть потеряли? Прекратите»",
-                    "Пройду мимо, это не мои проблемы.",
-                    "Буду снимать на видео, чтобы показать друзьям."
-                ],
-                correctIndex: 0, // Также допустим вариант 1, но первый фокус на жертве
-                explanation: "Первичная помощь пострадавшему и проявление эмпатии возвращают человеку чувство безопасности и справедливости.",
-                tip: "Никогда не снимайте чужие унижения на камеру ради развлечения."
-            },
-            {
-                category: "Личные сообщения",
-                difficulty: "hard",
-                title: "Тебе в личные сообщения пишут неприятные вещи, угрожают и требуют извинений за то, чего ты не делал. Твои действия?",
-                options: [
-                    "Удалю переписку и буду переживать в одиночку.",
-                    "Сделаю скриншоты экрана, заблокирую обидчика и покажу всё родителям.",
-                    "Начну оскорблять их в ответ еще сильнее.",
-                    "Расскажу всем знакомым и устрою встречу «разборку»."
-                ],
-                correctIndex: 1,
-                explanation: "Алгоритм цифровой безопасности: зафиксировать улики (скриншоты), заблокировать агрессора и довериться близким взрослым.",
-                tip: "Скриншоты являются неопровержимым доказательством кибербуллинга."
-            },
-            {
-                category: "Психология класса",
-                difficulty: "easy",
-                title: "Одноклассницу перестали приглашать на дни рождения и демонстративно отсаживают за партой. Как называется эта форма травли?",
-                options: [
-                    "Обычная подростковая мода.",
-                    "Изоляция и бойкот (скрытый буллинг).",
-                    "Личный выбор каждого, с кем дружить.",
-                    "Временное недоразумение, скоро пройдет."
-                ],
-                correctIndex: 1,
-                explanation: "Социальная изоляция и бойкот — это один из самых тяжелых видов психологического буллинга, который наносит глубокие душевные раны.",
-                tip: "Игнорирование человека с целью причинить ему боль — это форма насилия."
-            },
-            {
-                category: "Забота о друзьях",
-                difficulty: "hard",
-                title: "Твой близкий друг стал замкнутым, часто грустит, избегает школы и у него пропал аппетит. Что тебе стоит сделать?",
-                options: [
-                    "Поговорить с ним наедине и спросить, не обижает ли кто его.",
-                    "Рассказать об изменениях в его поведении школьному психологу или родителям.",
-                    "Посмеяться над тем, что он стал таким чувствительным.",
-                    "Перестать с ним общаться, чтобы не портить себе настроение."
-                ],
-                correctIndex: 1, // Или 0, но комплексный подход с родителями/психологом самый надежный
-                explanation: "При резком изменении поведения друга важно привлечь взрослых (психолога или родителей), так как подросток может скрывать серьезную травлю.",
-                tip: "Настоящая дружба проявляется в готовности прийти на помощь в трудную минуту."
-            },
-            {
-                category: "Работа над ошибками",
-                difficulty: "medium",
-                title: "Что делать, если ты сам случайно обидел человека или вовлекся в травлю, поняв это позже?",
-                options: [
-                    "Притвориться, что ничего не было, и делать вид, будто я тут ни при чем.",
-                    "Подойти и искренне извиниться перед человеком лично.",
-                    "Сказать всем, что меня заставили друзья.",
-                    "Предложить помощь и впредь открыто поддерживать его."
-                ],
-                correctIndex: 3, // Комплексное исправление ошибок
-                explanation: "Признать ошибку, извиниться и искупить вину реальной поддержкой — показатель зрелости и сильного характера.",
-                tip: "Каждый имеет право на ошибку, главное — вовремя ее исправить."
+        function playSound(type) {
+            initAudio();
+            if (Tone.context.state !== 'running') Tone.context.resume();
+            
+            if (type === 'success') {
+                synth.triggerAttackRelease(["C5", "E5", "G5"], "8n");
+            } else if (type === 'error') {
+                synth.triggerAttackRelease(["C3", "D#3"], "8n");
+            } else if (type === 'click') {
+                synth.triggerAttackRelease("C5", "32n");
+            } else if (type === 'win') {
+                synth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "4n");
             }
-        ];
+        }
 
-        // UI Element References
-        const screenWelcome = document.getElementById('screen-welcome');
-        const screenQuestion = document.getElementById('screen-question');
-        const screenFeedback = document.getElementById('screen-feedback');
-        const screenFinal = document.getElementById('screen-final');
-        const gameHeader = document.getElementById('game-header');
+        function startGame() {
+            initAudio();
+            nextSlide();
+        }
 
-        const inputName = document.getElementById('input-name');
-        const selectGrade = document.getElementById('select-grade');
-        const playerNameDisplay = document.getElementById('player-name-display');
-        const playerGradeDisplay = document.getElementById('player-grade-display');
-        const playerAvatarDisplay = document.getElementById('player-avatar-display');
-
-        const scoreCounter = document.getElementById('score-counter');
-        const streakCounter = document.getElementById('streak-counter');
-        const questionCounter = document.getElementById('question-counter');
-        const difficultyBadge = document.getElementById('difficulty-badge');
-        const questionCategory = document.getElementById('question-category');
-        const questionTitle = document.getElementById('question-title');
-        const timerBar = document.getElementById('timer-bar');
-        const timerText = document.getElementById('timer-text');
-
-        const feedbackBadge = document.getElementById('feedback-badge');
-        const feedbackHeader = document.getElementById('feedback-header');
-        const feedbackExplanation = document.getElementById('feedback-explanation');
-        const feedbackTip = document.getElementById('feedback-tip');
-
-        const finalScoreText = document.getElementById('final-score-text');
-        const finalStreak = document.getElementById('final-streak');
-        const finalCorrectCount = document.getElementById('final-correct-count');
-        const finalBadgeTitle = document.getElementById('final-badge-title');
-        const finalBadgeIcon = document.getElementById('final-badge-icon');
-
-        // Avatar selector
-        function selectAvatar(avatar) {
-            soundClick();
-            gameState.avatar = avatar;
-            document.querySelectorAll('.avatar-btn').forEach(btn => {
-                btn.classList.remove('bg-purple-100', 'border-purple-600');
-                btn.classList.add('bg-slate-100', 'border-transparent');
-                if(btn.textContent.trim() === avatar) {
-                    btn.classList.remove('bg-slate-100', 'border-transparent');
-                    btn.classList.add('bg-purple-100', 'border-purple-600');
+        // Логика навигации
+        function updateSlides() {
+            document.querySelectorAll('.slide').forEach((s, idx) => {
+                if (idx === currentSlide) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
                 }
             });
+            // Убираем/показываем стрелки на краях
+            document.querySelector('.nav-btn-prev').style.display = currentSlide === 0 ? 'none' : 'flex';
+            document.querySelector('.nav-btn-next').style.display = currentSlide === totalSlides - 1 ? 'none' : 'flex';
         }
 
-        // Start Game
-        function startGame() {
-            soundClick();
-            const nameVal = inputName.value.trim();
-            if(nameVal) gameState.name = nameVal;
-            gameState.grade = selectGrade.value;
-            gameState.score = 0;
-            gameState.streak = 0;
-            gameState.maxStreak = 0;
-            gameState.correctCount = 0;
-            gameState.currentIndex = 0;
-
-            playerNameDisplay.textContent = gameState.name;
-            playerGradeDisplay.textContent = gameState.grade;
-            playerAvatarDisplay.textContent = gameState.avatar;
-            scoreCounter.textContent = '0';
-            streakCounter.textContent = '0 стрик';
-
-            screenWelcome.classList.add('hidden');
-            gameHeader.classList.remove('hidden');
-            screenQuestion.classList.remove('hidden');
-
-            loadQuestion();
-        }
-
-        // Load Question
-        function loadQuestion() {
-            clearInterval(gameState.timerInterval);
-            gameState.timer = 30;
-            timerText.textContent = gameState.timer;
-            timerBar.style.width = '100%';
-
-            // Enable option buttons
-            for(let i=0; i<4; i++) {
-                const btn = document.getElementById(`btn-opt-${i}`);
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.style.filter = 'none';
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlides();
+                playSound('click');
             }
+        }
 
-            const q = questions[gameState.currentIndex];
-            questionCounter.textContent = `Вопрос ${gameState.currentIndex + 1} из ${questions.length}`;
-            questionCategory.textContent = q.category;
-            questionTitle.textContent = q.title;
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlides();
+                playSound('click');
+            }
+        }
+        
+        function goToSlide(n) {
+            currentSlide = n;
+            updateSlides();
+        }
 
-            // Difficulty styling
-            if(q.difficulty === 'easy') {
-                difficultyBadge.textContent = 'Легкий';
-                difficultyBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-            } else if(q.difficulty === 'medium') {
-                difficultyBadge.textContent = 'Средний';
-                difficultyBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        // Клавиатурная навигация
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // ИГРОВАЯ ЛОГИКА
+        
+        // --- Общая логика выделения (Click to Select) ---
+        let selectedBubble = null;
+
+        function selectBubble(el, gameContext) {
+            if(el.classList.contains('disabled') || el.classList.contains('success')) return;
+            
+            playSound('click');
+            // Сброс выделения
+            document.querySelectorAll('.number-bubble.selected').forEach(b => b.classList.remove('selected'));
+            
+            // Выделяем текущий
+            el.classList.add('selected');
+            selectedBubble = { element: el, context: gameContext, value: parseInt(el.innerText) };
+        }
+
+        // --- ИГРА 1: Чётное / Нечётное ---
+        function placeBubble(targetType, boxEl) {
+            if (!selectedBubble || selectedBubble.context !== 'warmup') return;
+            
+            const isEven = selectedBubble.value % 2 === 0;
+            const isCorrect = (targetType === 'even' && isEven) || (targetType === 'odd' && !isEven);
+            
+            if (isCorrect) {
+                playSound('success');
+                // Перемещаем элемент
+                selectedBubble.element.classList.remove('selected');
+                selectedBubble.element.classList.add('success');
+                boxEl.querySelector('.bucket-content').appendChild(selectedBubble.element);
+                selectedBubble = null;
             } else {
-                difficultyBadge.textContent = 'Сложный';
-                difficultyBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30';
+                playSound('error');
+                selectedBubble.element.classList.add('shake');
+                setTimeout(() => selectedBubble.element.classList.remove('shake'), 400);
             }
+        }
 
-            for(let i=0; i<4; i++) {
-                document.getElementById(`opt-${i}`).textContent = q.options[i];
-            }
+        // --- ИГРА 2: Сортировка 2, 5, 10 ---
+        function placeMainBubble(targetType, boxEl) {
+            if (!selectedBubble || selectedBubble.context !== 'mainSort') return;
+            
+            const val = selectedBubble.value;
+            const div2 = val % 2 === 0;
+            const div5 = val % 5 === 0;
+            const div10 = val % 10 === 0;
+            
+            let isCorrect = false;
+            
+            // Поскольку некоторые числа делятся на несколько (например 1110 делится на все), 
+            // принимаем ответ, если он логически верен для выбранной корзины.
+            // Но чтобы усложнить, можно требовать строгую классификацию, однако в КСП 
+            // числа могут попадать в разные множества. Сделаем так: 
+            // если делится на 2 и кидают в 2 - верно (создается копия).
+            if (targetType === 'div2' && div2) isCorrect = true;
+            if (targetType === 'div5' && div5) isCorrect = true;
+            if (targetType === 'div10' && div10) isCorrect = true;
+            if (targetType === 'none' && !div2 && !div5 && !div10) isCorrect = true;
 
-            // Start Timer
-            gameState.timerInterval = setInterval(() => {
-                gameState.timer--;
-                timerText.textContent = gameState.timer;
-                timerBar.style.width = `${(gameState.timer / 30) * 100}%`;
-
-                if(gameState.timer <= 0) {
-                    clearInterval(gameState.timerInterval);
-                    handleAnswer(-1); // Time out
+            if (isCorrect) {
+                playSound('success');
+                
+                // Создаем копию для корзины (так как число может пойти в несколько корзин)
+                const clone = selectedBubble.element.cloneNode(true);
+                clone.classList.remove('selected');
+                clone.classList.add('pop-in');
+                // Цвет в зависимости от корзины
+                if(targetType === 'div2') clone.classList.add('bg-blue', 'text-white');
+                if(targetType === 'div5') clone.classList.add('bg-emerald', 'text-white');
+                if(targetType === 'div10') clone.classList.add('bg-amber', 'text-white');
+                if(targetType === 'none') clone.classList.add('bg-gray-400', 'text-white');
+                
+                clone.style.width = '4vw'; clone.style.height = '4vw'; clone.style.fontSize = '1.5vw';
+                clone.onclick = null;
+                
+                boxEl.querySelector('.bucket-content').appendChild(clone);
+                
+                // Если это "none", прячем оригинал
+                if (targetType === 'none') {
+                    selectedBubble.element.style.visibility = 'hidden';
+                    selectedBubble.element.classList.remove('selected');
+                    selectedBubble = null;
+                } else {
+                    // Оставляем выделенным, чтобы ребенок мог закинуть в другую корзину
+                    // Но визуально показываем успех
+                    boxEl.classList.add('highlight');
+                    setTimeout(() => boxEl.classList.remove('highlight'), 300);
                 }
-            }, 1000);
+
+            } else {
+                playSound('error');
+                selectedBubble.element.classList.add('shake');
+                setTimeout(() => selectedBubble.element.classList.remove('shake'), 400);
+            }
         }
 
-        // Handle Answer Choice
-        function handleAnswer(selectedIndex) {
-            clearInterval(gameState.timerInterval);
-            const q = questions[gameState.currentIndex];
-            const isCorrect = (selectedIndex === q.correctIndex);
+        // --- УРОВЕНЬ А ---
+        let levelAFound = 0;
+        function checkLevelA(el, digit) {
+            if (el.classList.contains('success')) return;
+            
+            if (digit % 2 === 0) {
+                playSound('success');
+                el.classList.add('bg-blue', 'text-white', 'success', 'pop-in');
+                document.getElementById('level-a-blank').innerText = digit;
+                levelAFound++;
+                if(levelAFound === 5) setTimeout(() => playSound('win'), 500);
+            } else {
+                playSound('error');
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 400);
+                el.style.opacity = '0.3';
+            }
+        }
 
-            // Disable all option buttons immediately
-            for(let i=0; i<4; i++) {
-                document.getElementById(`btn-opt-${i}`).disabled = true;
-                if(i !== q.correctIndex) {
-                    document.getElementById(`btn-opt-${i}`).style.opacity = '0.5';
+        // --- УРОВЕНЬ В ---
+        function checkLevelB(el, digit) {
+            const msg = document.getElementById('level-b-msg');
+            msg.classList.remove('hidden-element');
+            
+            if (digit === 5) {
+                playSound('win');
+                document.getElementById('level-b-blank').innerText = '5';
+                el.classList.add('bg-emerald', 'text-white');
+                msg.style.color = '#10b981';
+                msg.innerText = "Верно! 715 делится на 5, но не делится на 10.";
+            } else if (digit === 0) {
+                playSound('error');
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 400);
+                msg.style.color = '#ef4444';
+                msg.innerText = "Ловушка! 710 оканчивается на 0, значит разделится и на 10!";
+            }
+        }
+
+        // --- УРОВЕНЬ С ---
+        let cSelected = null;
+        let cSlots = [null, null, null]; // [сотни, десятки, единицы]
+
+        function selectLevelCBubble(el) {
+            if(el.style.opacity === '0.2') return;
+            playSound('click');
+            document.querySelectorAll('#slide-8 .number-bubble.selected').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            cSelected = el;
+        }
+
+        function placeLevelCBubble(slotEl, index) {
+            if (!cSelected) {
+                // Если кликнули по слоту без выбора, возвращаем цифру обратно
+                if (cSlots[index] !== null) {
+                    document.getElementById('c-dig-' + cSlots[index]).style.opacity = '1';
+                    slotEl.innerHTML = '';
+                    cSlots[index] = null;
+                    playSound('click');
                 }
+                return;
             }
+            
+            playSound('click');
+            const val = cSelected.innerText;
+            
+            // Если слот занят, возвращаем старую цифру
+            if (cSlots[index] !== null) {
+                document.getElementById('c-dig-' + cSlots[index]).style.opacity = '1';
+            }
+            
+            // Ставим новую
+            cSlots[index] = val;
+            slotEl.innerHTML = `<div class="number-bubble pop-in" style="width:100%; height:100%; font-size:3vw;">${val}</div>`;
+            
+            // Прячем оригинал
+            cSelected.style.opacity = '0.2';
+            cSelected.classList.remove('selected');
+            cSelected = null;
+        }
 
-            if(isCorrect) {
-                soundCorrect();
-                gameState.streak++;
-                gameState.correctCount++;
-                if(gameState.streak > gameState.maxStreak) gameState.maxStreak = gameState.streak;
-                // Kahoot formula: points based on remaining time + streak bonus
-                const pts = 500 + (gameState.timer * 20) + (gameState.streak * 100);
-                gameState.score += pts;
-
-                feedbackBadge.className = "inline-block p-4 rounded-3xl text-4xl mb-1 bg-emerald-500 text-white shadow-lg";
-                feedbackBadge.innerHTML = "🎉";
-                feedbackHeader.textContent = `Правильно! (+${pts} очков)`;
+        function checkLevelC() {
+            if(cSlots.includes(null)) {
+                playSound('error');
+                return alert("Заполни все клеточки!");
+            }
+            
+            const num = parseInt(cSlots.join(''));
+            
+            // Проверка условий
+            // 1. Первая цифра не 0
+            if (cSlots[0] == 0) {
+                playSound('error');
+                shakeSlots();
+                return;
+            }
+            // 2. Делится на 2, 5, 10 -> значит последняя цифра 0
+            if (num % 10 === 0) {
+                playSound('win');
+                document.querySelectorAll('#slide-8 .target-box').forEach(b => {
+                    b.style.borderColor = '#10b981';
+                    b.style.backgroundColor = '#d1fae5';
+                });
             } else {
-                soundWrong();
-                gameState.streak = 0;
-                feedbackBadge.className = "inline-block p-4 rounded-3xl text-4xl mb-1 bg-rose-500 text-white shadow-lg";
-                feedbackBadge.innerHTML = "❌";
-                feedbackHeader.textContent = selectedIndex === -1 ? "Время вышло!" : "Неверный выбор!";
-            }
-
-            scoreCounter.textContent = gameState.score;
-            streakCounter.textContent = `${gameState.streak} стрик`;
-
-            feedbackExplanation.textContent = q.explanation;
-            feedbackTip.textContent = q.tip;
-
-            // Small delay before showing feedback screen for Kahoot immersion
-            setTimeout(() => {
-                screenQuestion.classList.add('hidden');
-                screenFeedback.classList.remove('hidden');
-            }, 400);
-        }
-
-        // Proceed to next or final
-        function nextStep() {
-            soundClick();
-            screenFeedback.classList.add('hidden');
-            gameState.currentIndex++;
-
-            if(gameState.currentIndex < questions.length) {
-                screenQuestion.classList.remove('hidden');
-                loadQuestion();
-            } else {
-                showFinal();
+                playSound('error');
+                shakeSlots();
             }
         }
-
-        // Show Final Podium Screen
-        function showFinal() {
-            gameHeader.classList.add('hidden');
-            screenFinal.classList.remove('hidden');
-
-            finalScoreText.textContent = `${gameState.name}, ты набрал ${gameState.score} очков!`;
-            finalStreak.textContent = `${gameState.maxStreak} 🔥`;
-            finalCorrectCount.textContent = `${gameState.correctCount} / ${questions.length}`;
-
-            let badgeTitle = "Хранитель Дружбы";
-            let badgeIcon = "🛡️";
-
-            if(gameState.score >= 7000) {
-                badgeTitle = "👑 Абсолютный Амбассадор Добра";
-                badgeIcon = "🌟";
-            } else if(gameState.score >= 4000) {
-                badgeTitle = "⭐ Мастер Эмпатии";
-                badgeIcon = "🏆";
-            } else {
-                badgeTitle = "🌱 Начинающий Защитник";
-                badgeIcon = "💡";
-            }
-
-            finalBadgeTitle.textContent = badgeTitle;
-            finalBadgeIcon.textContent = badgeIcon;
-
-            if(typeof confetti === 'function') {
-                confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
-            }
+        
+        function shakeSlots() {
+            const slotsBox = document.querySelector('#slide-8 .target-box').parentElement;
+            slotsBox.classList.add('shake');
+            setTimeout(() => slotsBox.classList.remove('shake'), 400);
         }
 
-        // Restart Game
-        function restartGame() {
-            soundClick();
-            screenFinal.classList.add('hidden');
-            screenWelcome.classList.remove('hidden');
-            inputName.value = '';
+        function resetLevelC() {
+            cSlots = [null, null, null];
+            document.querySelectorAll('#slide-8 .target-box').forEach(b => {
+                b.innerHTML = '';
+                b.style.borderColor = '';
+                b.style.backgroundColor = '';
+            });
+            document.getElementById('c-slot-2').style.borderColor = '#f59e0b'; // restore original color
+            ['0','2','5'].forEach(v => {
+                document.getElementById('c-dig-' + v).style.opacity = '1';
+                document.getElementById('c-dig-' + v).classList.remove('selected');
+            });
+            cSelected = null;
         }
+
+        // Инициализация при загрузке
+        updateSlides();
     </script>
 </body>
 </html>
-```
-eof
